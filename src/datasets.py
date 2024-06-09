@@ -14,14 +14,25 @@ class ThingsMEGDataset(torch.utils.data.Dataset):
         self.num_classes = 1854
         
         self.X = torch.load(os.path.join(data_dir, f"{split}_X.pt"))
+
+        # # チャネル正規化
+        # mean = self.X.mean(dim=-1, keepdim=True)
+        # std = self.X.std(dim=-1, keepdim=True)
+        # self.X = (self.X - mean) / (std + 10**(-6))
         
-        self.X = torch.log(torch.abs(torch.fft.rfft(self.X)[:, :, 1:70]) ** 2)
-        # GCN 改善の余地あり
-        mean = self.X.mean(dim=(1, 2), keepdim=True)
-        std = self.X.std(dim=(1, 2), keepdim=True)
-        self.X = (self.X - mean) / (std + 10**(-6))
+        # self.X = torch.log(torch.abs(torch.fft.rfft(self.X)[:, :, 1:70]) ** 2)
+
+        # # GCN 改善の余地あり
+        # mean = self.X.mean(dim=(1, 2), keepdim=True)
+        # std = self.X.std(dim=(1, 2), keepdim=True)
+        # self.X = (self.X - mean) / (std + 10**(-6))
 
         self.subject_idxs = torch.load(os.path.join(data_dir, f"{split}_subject_idxs.pt"))
+
+        # # 特定の人のデータを用いる
+        # subject_id = 0
+        # self.X = self.X[self.subject_idxs == subject_id]
+        # self.subject_idxs = self.subject_idxs[self.subject_idxs == subject_id]
         
         if split in ["train", "val"]:
             self.y = torch.load(os.path.join(data_dir, f"{split}_y.pt"))
