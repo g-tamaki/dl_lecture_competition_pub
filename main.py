@@ -12,6 +12,8 @@ from tqdm import tqdm
 from src.datasets import ThingsMEGDataset
 from src.models import BasicConvClassifier
 from src.utils import set_seed
+from src.loss import ClipLoss
+from src.accuracy import Accuracy
 
 
 @hydra.main(version_base=None, config_path="configs", config_name="config")
@@ -27,13 +29,13 @@ def run(args: DictConfig):
     # ------------------
     loader_args = {"batch_size": args.batch_size, "num_workers": args.num_workers}
     
-    train_set = ThingsMEGDataset("train", args.data_dir)
+    train_set = ThingsMEGDataset("train", args.data_dir, args.device)
     train_loader = torch.utils.data.DataLoader(train_set, shuffle=True, **loader_args)
     print('train data loaded.')
-    val_set = ThingsMEGDataset("val", args.data_dir)
+    val_set = ThingsMEGDataset("val", args.data_dir, args.device)
     val_loader = torch.utils.data.DataLoader(val_set, shuffle=False, **loader_args)
     print('valid data loaded.')
-    test_set = ThingsMEGDataset("test", args.data_dir)
+    test_set = ThingsMEGDataset("test", args.data_dir, args.device)
     test_loader = torch.utils.data.DataLoader(
         test_set, shuffle=False, batch_size=args.batch_size, num_workers=args.num_workers
     )
@@ -43,7 +45,7 @@ def run(args: DictConfig):
     #       Model
     # ------------------
     model = BasicConvClassifier(
-        train_set.num_classes, train_set.seq_len, train_set.num_channels
+        512, train_set.seq_len, train_set.num_channels
     ).to(args.device)
 
     # ------------------
@@ -55,40 +57,45 @@ def run(args: DictConfig):
     #   Start training
     # ------------------  
     max_val_acc = 0
-    accuracy = Accuracy(
-        task="multiclass", num_classes=train_set.num_classes, top_k=10
-    ).to(args.device)
-      
+    loss = ClipLoss()
+    logit_scale = 1  # 学習パラメータのはず。
+    accuracy = Accuracy(args.device, top_k=10)
+    # accuracy = Accuracy(
+    #     task="multiclass", num_classes=train_set.num_classes, top_k=10
+    # ).to(args.device)
+    
     for epoch in range(args.epochs):
         print(f"Epoch {epoch+1}/{args.epochs}")
         
         train_loss, train_acc, val_loss, val_acc = [], [], [], []
         
         model.train()
-        for X, y, subject_idxs in tqdm(train_loader, desc="Train"):
+        for X, y, image_features, subject_idxs in tqdm(train_loader, desc="Train"):
             X, y = X.to(args.device), y.to(args.device)
+            image_features = image_features.to(args.device)
 
             y_pred = model(X)
             
-            loss = F.cross_entropy(y_pred, y)
-            train_loss.append(loss.item())
+            losses = loss(y_pred, image_features, logit_scale)
+            train_loss.append(losses.item())
             
             optimizer.zero_grad()
-            loss.backward()
+            losses.backward()
             optimizer.step()
             
             acc = accuracy(y_pred, y)
-            train_acc.append(acc.item())
+            train_acc.append(acc)
 
         model.eval()
-        for X, y, subject_idxs in tqdm(val_loader, desc="Validation"):
+        for X, y, image_features, subject_idxs in tqdm(val_loader, desc="Validation"):
             X, y = X.to(args.device), y.to(args.device)
+            image_features = image_features.to(args.device)
             
             with torch.no_grad():
                 y_pred = model(X)
             
-            val_loss.append(F.cross_entropy(y_pred, y).item())
-            val_acc.append(accuracy(y_pred, y).item())
+            val_loss.append(loss(y_pred, image_features, logit_scale).item())
+            val_acc.append(accuracy(y_pred, y))
 
         print(f"Epoch {epoch+1}/{args.epochs} | train loss: {np.mean(train_loss):.3f} | train acc: {np.mean(train_acc):.3f} | val loss: {np.mean(val_loss):.3f} | val acc: {np.mean(val_acc):.3f}")
         torch.save(model.state_dict(), os.path.join(logdir, "model_last.pt"))
@@ -100,7 +107,7 @@ def run(args: DictConfig):
             torch.save(model.state_dict(), os.path.join(logdir, "model_best.pt"))
             max_val_acc = np.mean(val_acc)
             
-    
+    sys.exit() 
     # ----------------------------------
     #  Start evaluation with best model
     # ----------------------------------
