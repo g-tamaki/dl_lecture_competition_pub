@@ -26,6 +26,7 @@ class ThingsMEGDataset(torch.utils.data.Dataset):
         mean = self.X.mean(dim=-1, keepdim=True)
         std = self.X.std(dim=-1, keepdim=True)
         self.X = (self.X - mean) / (std + 10**(-6))
+        # self.X = (self.X) / (std + 10**(-6))
         
         # self.X = torch.log(torch.abs(torch.fft.rfft(self.X)[:, :, 1:70]) ** 2)
 
@@ -33,6 +34,8 @@ class ThingsMEGDataset(torch.utils.data.Dataset):
         # mean = self.X.mean(dim=(1, 2), keepdim=True)
         # std = self.X.std(dim=(1, 2), keepdim=True)
         # self.X = (self.X - mean) / (std + 10**(-6))
+
+        # self.X = torch.clamp(self.X, min=-20, max=20)
 
         self.subject_idxs = torch.load(os.path.join(data_dir, f"{split}_subject_idxs.pt"))
         

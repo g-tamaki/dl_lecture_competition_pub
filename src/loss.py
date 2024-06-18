@@ -58,7 +58,8 @@ class ClipLoss(nn.Module):
         return logits_per_image, logits_per_text
 
     def forward(self, image_features, text_features, logit_scale, output_dict=False):
-        image_features_norm = image_features / image_features.norm(dim=-1, keepdim=True)
+        # image_features_norm = image_features / image_features.norm(dim=-1, keepdim=True)
+        image_features_norm = image_features
 
         device = image_features.device
         logits_per_image, logits_per_text = self.get_logits(image_features_norm, text_features, logit_scale)

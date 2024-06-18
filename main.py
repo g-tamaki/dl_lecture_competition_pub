@@ -18,6 +18,7 @@ from src.accuracy import Accuracy
 
 @hydra.main(version_base=None, config_path="configs", config_name="config")
 def run(args: DictConfig):
+    print(args)
     set_seed(args.seed)
     logdir = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
     
@@ -83,8 +84,9 @@ def run(args: DictConfig):
             losses.backward()
             optimizer.step()
             
-            acc = accuracy(y_pred, y)
-            train_acc.append(acc)
+            if len(train_acc) * args.batch_size < 1000:
+                acc = accuracy(y_pred, y)
+                train_acc.append(acc)
 
         model.eval()
         for X, y, image_features, subject_idxs in tqdm(val_loader, desc="Validation"):
