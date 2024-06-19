@@ -18,7 +18,7 @@ class BasicConvClassifier(nn.Module):
             # ConvBlock(in_channels, in_channels, kernel_size=1),
             ConvBlock(in_channels, hid_dim),
             ConvBlock(hid_dim, hid_dim),
-            ConvBlock(hid_dim, hid_dim),
+            # ConvBlock(hid_dim, hid_dim),
             # ConvBlock(hid_dim, hid_dim),
             # ConvBlock(hid_dim, hid_dim),
             # ConvBlock(hid_dim, hid_dim),
@@ -57,7 +57,7 @@ class ConvBlock(nn.Module):
 
         self.conv0 = nn.Conv1d(in_dim, out_dim, kernel_size, padding="same")
         self.conv1 = nn.Conv1d(out_dim, out_dim, kernel_size, padding="same")
-        # self.conv2 = nn.Conv1d(out_dim, out_dim, kernel_size) # , padding="same")
+        # self.conv2 = nn.Conv1d(out_dim, 2*out_dim, kernel_size, padding="same")  # paddingなくす？
         
         self.batchnorm0 = nn.BatchNorm1d(num_features=out_dim)
         self.batchnorm1 = nn.BatchNorm1d(num_features=out_dim)
