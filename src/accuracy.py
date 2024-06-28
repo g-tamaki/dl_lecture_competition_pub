@@ -37,7 +37,7 @@ class Accuracy(nn.Module):
 
         score = 0
         pred = pred.tolist()
-        for i in range(len(pred)):
+        for i in range(min(len(pred), 1000)):
             j = self.top_k
             tmp = set(pred[i][:j])
             while len(tmp) < self.top_k:
