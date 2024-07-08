@@ -2,9 +2,17 @@
 # python main.py use_wandb=True lr=0.0005
 # python main.py use_wandb=True lr=0.0002
 # python main.py use_wandb=True lr=0.0001
-python main.py use_wandb=True lr=0.001 batch_size=128
-python main.py use_wandb=True lr=0.001 batch_size=256
-python main.py use_wandb=True lr=0.001 batch_size=512
-python main.py use_wandb=True lr=0.001 batch_size=1024
-python main.py use_wandb=True lr=0.001 batch_size=2048
-python main.py use_wandb=True lr=0.001 batch_size=4096
+
+# python main.py use_wandb=True lr=0.001 batch_size=128
+# python main.py use_wandb=True lr=0.001 batch_size=256
+# python main.py use_wandb=True lr=0.001 batch_size=512
+# python main.py use_wandb=True lr=0.001 batch_size=1024
+# python main.py use_wandb=True lr=0.001 batch_size=2048
+# python main.py use_wandb=True lr=0.001 batch_size=4096
+
+# python main.py lr=0.001 batch_size=128
+# python main.py lr=0.001 batch_size=256
+python main.py lr=0.001 batch_size=512
+python main.py lr=0.001 batch_size=1024
+python main.py lr=0.001 batch_size=2048 epochs=1
+python main.py lr=0.001 batch_size=4096 epochs=1

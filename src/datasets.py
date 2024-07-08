@@ -48,12 +48,12 @@ class ThingsMEGDataset(torch.utils.data.Dataset):
             self.image_features = torch.load(os.path.join(data_dir, f"{split}_image_features.pt"))
             self.image_features /= self.image_features.norm(dim=-1, keepdim=True)
 
-        # 特定の人のデータを用いる
-        subject_id = 0
-        self.X = self.X[self.subject_idxs == subject_id]
-        if split in ["train", "val"]:
-            self.y = self.y[self.subject_idxs == subject_id]
-        self.subject_idxs = self.subject_idxs[self.subject_idxs == subject_id]
+        # # 特定の人のデータを用いる
+        # subject_id = 0
+        # self.X = self.X[self.subject_idxs == subject_id]
+        # if split in ["train", "val"]:
+        #     self.y = self.y[self.subject_idxs == subject_id]
+        # self.subject_idxs = self.subject_idxs[self.subject_idxs == subject_id]
 
     def preprocess_image_features(self, split, data_dir, device):
         with open(os.path.join(data_dir, f"{split}_image_paths.txt")) as f:
