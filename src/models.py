@@ -29,8 +29,10 @@ class BasicConvClassifier(nn.Module):
         self.num_subjects = 4
 
         self.blocks = nn.ModuleList([nn.Sequential(
-            ConvBlock(in_channels, hid_dim),
-            ConvBlock(hid_dim, hid_dim),
+            ConvBlock(in_channels, hid_dim, dilation1=1, dilation2=4),
+            ConvBlock(hid_dim, hid_dim, dilation1=8, dilation2=16),
+            ConvBlock(hid_dim, hid_dim, dilation1=32, dilation2=64),
+            # ConvBlock(hid_dim, hid_dim, dilation1=128, dilation2=256),
         ) for i in range(self.num_subjects)])
 
         self.head = nn.Sequential(
@@ -67,14 +69,16 @@ class ConvBlock(nn.Module):
         out_dim,
         kernel_size: int = 3,
         p_drop: float = 0.1,
+        dilation1 = 1,
+        dilation2 = 1,
     ) -> None:
         super().__init__()
         
         self.in_dim = in_dim
         self.out_dim = out_dim
 
-        self.conv0 = nn.Conv1d(in_dim, out_dim, kernel_size, padding="same")
-        self.conv1 = nn.Conv1d(out_dim, out_dim, kernel_size, padding="same")
+        self.conv0 = nn.Conv1d(in_dim, out_dim, kernel_size, padding="same", dilation=dilation1)
+        self.conv1 = nn.Conv1d(out_dim, out_dim, kernel_size, padding="same", dilation=dilation2)
         # self.conv2 = nn.Conv1d(out_dim, 2*out_dim, kernel_size, padding="same")  # paddingなくす？
         
         self.batchnorm0 = nn.BatchNorm1d(num_features=out_dim)
