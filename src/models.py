@@ -11,7 +11,7 @@ class BasicConvClassifier(nn.Module):
         num_classes: int,
         seq_len: int,
         in_channels: int,
-        hid_dim: int = 128,
+        hid_dim: int = 320,  # 128
         consider_subjects: bool = True,
     ) -> None:
         super().__init__()
@@ -22,14 +22,17 @@ class BasicConvClassifier(nn.Module):
 
         if self.consider_subjects:
             self.hid_dim = hid_dim
-            self.num_subjects = 4
+            self.n_subjects = 4
 
-            self.blocks = nn.ModuleList([nn.Sequential(
-                # ConvBlock(in_channels, hid_dim, dilation1=1, dilation2=1, kernel_size=1),
-                # nn.Linear(in_channels, hid_dim),
-                nn.Conv1d(in_channels, hid_dim, 1, padding="same"),
-                # ConvBlock(hid_dim, hid_dim, dilation1=128, dilation2=256),
-            ) for i in range(self.num_subjects)])
+            # self.blocks = nn.ModuleList([nn.Sequential(
+            #     # ConvBlock(in_channels, hid_dim, dilation1=1, dilation2=1, kernel_size=1),
+            #     # nn.Linear(in_channels, hid_dim),
+            #     nn.Conv1d(in_channels, hid_dim, 1, padding="same"),
+            #     # ConvBlock(hid_dim, hid_dim, dilation1=128, dilation2=256),
+            # ) for i in range(self.n_subjects)])
+
+            self.weights = nn.Parameter(torch.randn(self.n_subjects, in_channels, hid_dim).to('cuda:0'))
+            self.weights.data *= 1 / in_channels ** 0.5
 
         else:
             self.blocks = nn.Sequential(
@@ -54,7 +57,7 @@ class BasicConvClassifier(nn.Module):
 
         self.logit_scale = nn.Parameter(torch.tensor(np.array([1], dtype='float32')))
 
-    def forward(self, X: torch.Tensor, subject_ids) -> torch.Tensor:
+    def forward(self, X: torch.Tensor, subjects) -> torch.Tensor:
         """_summary_
         Args:
             X ( b, c, t ): _description_
@@ -68,11 +71,16 @@ class BasicConvClassifier(nn.Module):
         X = self.blocks1(X)
 
         if self.consider_subjects:
-            x1 = torch.zeros(batch_size, self.hid_dim, 281).to(X.device)
-            for i in range(self.num_subjects):
-                x1[subject_ids==i] = self.blocks[i](X[subject_ids==i])
+            # x1 = torch.zeros(batch_size, self.hid_dim, 281).to(X.device)
+            # for i in range(self.n_subjects):
+            #     x1[subjects==i] = self.blocks[i](X[subjects==i])
+
             # for i, x in enumerate([self.blocks[i](X[subject_ids==i]) for i in range(self.num_subjects)]):
             #     x1[subject_ids==i] = x  # 早くならなかった
+
+            _, C, D = self.weights.shape            
+            weights = self.weights.gather(0, subjects.view(-1, 1, 1).expand(-1, C, D))
+            x1 = torch.einsum("bct, bcd->bdt", X, weights)
         else:
             x1 = self.blocks(X)
 

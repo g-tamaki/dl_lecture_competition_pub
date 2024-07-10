@@ -87,7 +87,7 @@ def run(args: DictConfig):
         model.train()
         for X, y, image_features, subject_idxs in tqdm(train_loader, desc="Train"):
             X, y = X.to(args.device), y.to(args.device)
-            image_features = image_features.to(args.device)
+            image_features, subject_idxs = image_features.to(args.device), subject_idxs.to(args.device)
 
             y_pred, logit_scale = model(X, subject_idxs)
             
@@ -108,7 +108,7 @@ def run(args: DictConfig):
         model.eval()
         for X, y, image_features, subject_idxs in tqdm(val_loader, desc="Validation"):
             X, y = X.to(args.device), y.to(args.device)
-            image_features = image_features.to(args.device)
+            image_features, subject_idxs = image_features.to(args.device), subject_idxs.to(args.device)
             
             with torch.no_grad():
                 y_pred, logit_scale = model(X, subject_idxs)
