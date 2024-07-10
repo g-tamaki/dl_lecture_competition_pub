@@ -11,7 +11,7 @@ class BasicConvClassifier(nn.Module):
         num_classes: int,
         seq_len: int,
         in_channels: int,
-        hid_dim: int = 320,  # 128
+        hid_dim: int = 512,  # 128
         consider_subjects: bool = True,
     ) -> None:
         super().__init__()
@@ -93,7 +93,7 @@ class ConvBlock(nn.Module):
         in_dim,
         out_dim,
         kernel_size: int = 3,
-        p_drop: float = 0.1,
+        p_drop: float = 0.2,
         dilation1 = 1,
         dilation2 = 1,
         # dilation3 = 2,
