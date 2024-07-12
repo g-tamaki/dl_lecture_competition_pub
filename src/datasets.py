@@ -1,4 +1,5 @@
 import os
+import random
 import numpy as np
 import torch
 from typing import Tuple
@@ -10,11 +11,14 @@ import concurrent.futures
 import time
 from tqdm import tqdm
 import gc
+from torchvision.transforms import v2
 
 
 class ThingsMEGDataset(torch.utils.data.Dataset):
-    def __init__(self, split: str, data_dir: str = "data", device = "cpu") -> None:
+    def __init__(self, split: str, data_dir: str = "data", device = "cpu", transforms = None) -> None:
         super().__init__()
+
+        self.transforms = transforms
         
         assert split in ["train", "val", "test"], f"Invalid split: {split}"
         self.split = split
@@ -96,7 +100,10 @@ class ThingsMEGDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, i):
         if hasattr(self, "y"):
-            return self.X[i], self.y[i], self.image_features[i], self.subject_idxs[i]
+            if self.transforms:
+                return self.transforms(self.X[i]), self.y[i], self.image_features[i], self.subject_idxs[i]
+            else:
+                return self.X[i], self.y[i], self.image_features[i], self.subject_idxs[i]
         else:
             return self.X[i], self.subject_idxs[i]
         
@@ -107,3 +114,31 @@ class ThingsMEGDataset(torch.utils.data.Dataset):
     @property
     def seq_len(self) -> int:
         return self.X.shape[2]
+    
+
+class TimeShift:
+#     def __init__(self, shift_range = None):
+#         self.shift_range = shift_range
+    
+    def __call__(self, tensor):
+        nChannels, nSeq = tensor.size()
+        # shift = random.randrange(nSeq)
+        shift = random.randrange(-4, 5)
+        return torch.roll(tensor, shifts=-shift, dims=-1)
+
+
+class TimeStretch:
+    # def __init__(self, ):
+
+    def __call__(self, tensor):
+        nChannels, nSeq = tensor.size()
+        seq = random.randrange(int(nSeq*(1-0.3)), int(nSeq*(1+0.3)))
+        self.transforms = v2.Resize(size=(271, seq), antialias=True)
+        tensor = self.transforms(tensor.view(1, 271, nSeq)).view(271, seq)
+        if seq > nSeq:
+            start = random.randrange(0, seq-nSeq+1)
+            return tensor[:, start:start+nSeq]
+        else:
+            out = torch.zeros((nChannels, nSeq))
+            out[:, :seq] = tensor
+            return out

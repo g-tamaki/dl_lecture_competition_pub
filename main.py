@@ -9,7 +9,7 @@ import wandb
 from termcolor import cprint
 from tqdm import tqdm
 
-from src.datasets import ThingsMEGDataset
+from src.datasets import ThingsMEGDataset, TimeShift, TimeStretch
 from src.models import BasicConvClassifier
 from src.utils import set_seed
 from src.loss import ClipLoss
@@ -44,7 +44,8 @@ def run(args: DictConfig):
     # ------------------
     loader_args = {"batch_size": args.batch_size, "num_workers": args.num_workers}
     
-    train_set = ThingsMEGDataset("train", args.data_dir, args.device)
+    transforms = TimeStretch()  # TimeShift()
+    train_set = ThingsMEGDataset("train", args.data_dir, args.device, transforms)
     train_loader = torch.utils.data.DataLoader(train_set, shuffle=True, **loader_args)
     print('train data loaded.')
     val_set = ThingsMEGDataset("val", args.data_dir, args.device)
