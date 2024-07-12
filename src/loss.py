@@ -57,14 +57,17 @@ class ClipLoss(nn.Module):
         
         return logits_per_image, logits_per_text
 
-    def forward(self, image_features, text_features, logit_scale, output_dict=False):
+    def forward(self, image_features, text_features, y, logit_scale, output_dict=False):
         # image_features_norm = image_features / image_features.norm(dim=-1, keepdim=True)
         image_features_norm = image_features
 
         device = image_features.device
         logits_per_image, logits_per_text = self.get_logits(image_features_norm, text_features, logit_scale)
 
-        labels = self.get_ground_truth(device, logits_per_image.shape[0])
+        # labels = self.get_ground_truth(device, logits_per_image.shape[0])
+        labels = torch.eye(logits_per_image.shape[0], device=device)
+        labels += (y.unsqueeze(0) == y.unsqueeze(1)).float()
+        labels /= labels.norm(dim=-1, keepdim=True)
 
         total_loss = (
             F.cross_entropy(logits_per_image, labels) +

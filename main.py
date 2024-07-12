@@ -92,7 +92,7 @@ def run(args: DictConfig):
 
             y_pred, logit_scale = model(X, subject_idxs)
             
-            losses = loss(y_pred, image_features, logit_scale)
+            losses = loss(y_pred, image_features, y, logit_scale)
             train_loss.append(losses.item())
             
             optimizer.zero_grad()
@@ -114,7 +114,7 @@ def run(args: DictConfig):
             with torch.no_grad():
                 y_pred, logit_scale = model(X, subject_idxs)
             
-            val_loss.append(loss(y_pred, image_features, logit_scale).item())
+            val_loss.append(loss(y_pred, image_features, y, logit_scale).item())
             val_acc.append(accuracy(accuracy_pre(y_pred), y).item())  # , 'accuracy'
 
         print(f"Epoch {epoch+1}/{args.epochs} | train loss: {np.mean(train_loss):.3f} | train acc: {np.mean(train_acc):.3f} | val loss: {np.mean(val_loss):.3f} | val acc: {np.mean(val_acc):.3f}")
