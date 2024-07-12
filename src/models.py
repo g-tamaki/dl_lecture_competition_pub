@@ -13,6 +13,7 @@ class BasicConvClassifier(nn.Module):
         in_channels: int,
         hid_dim: int = 512,  # 128
         consider_subjects: bool = True,
+        device = 'cpu',
     ) -> None:
         super().__init__()
 
@@ -31,7 +32,7 @@ class BasicConvClassifier(nn.Module):
             #     # ConvBlock(hid_dim, hid_dim, dilation1=128, dilation2=256),
             # ) for i in range(self.n_subjects)])
 
-            self.weights = nn.Parameter(torch.randn(self.n_subjects, in_channels, hid_dim).to('cuda:0'))
+            self.weights = nn.Parameter(torch.randn(self.n_subjects, in_channels, hid_dim).to(device))
             self.weights.data *= 1 / in_channels ** 0.5
 
         else:

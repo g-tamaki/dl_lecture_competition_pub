@@ -35,6 +35,7 @@ def run(args: DictConfig):
     print(args)
     set_seed(args.seed)
     logdir = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
+    print(logdir)
     
     if args.use_wandb:
         wandb.init(mode="online", dir=logdir, project="MEG-classification")
@@ -61,7 +62,7 @@ def run(args: DictConfig):
     #       Model
     # ------------------
     model = BasicConvClassifier(
-        512, train_set.seq_len, train_set.num_channels
+        512, train_set.seq_len, train_set.num_channels, device=args.device
     ).to(args.device)
 
     # ------------------
