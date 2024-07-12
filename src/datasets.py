@@ -132,7 +132,12 @@ class TimeStretch:
 
     def __call__(self, tensor):
         nChannels, nSeq = tensor.size()
-        seq = random.randrange(int(nSeq*(1-0.3)), int(nSeq*(1+0.3)))
+        # seq = random.randrange(int(nSeq*(1-0.3)), int(nSeq*(1+0.3)))
+        # seq = np.random.normal(loc=0, scale=0.2)
+        # seq = int((1+seq)*nSeq) if seq >= 0 else int(1/(1-seq)*nSeq)
+        # seq = max(seq, 1)
+        seq = int(2**np.random.normal(scale=0.25) * nSeq)
+        # seq = max(int(np.random.normal(loc=1, scale=0.1)*nSeq), 1)
         self.transforms = v2.Resize(size=(271, seq), antialias=True)
         tensor = self.transforms(tensor.view(1, 271, nSeq)).view(271, seq)
         if seq > nSeq:
@@ -142,3 +147,38 @@ class TimeStretch:
             out = torch.zeros((nChannels, nSeq))
             out[:, :seq] = tensor
             return out
+
+
+class RandomErasing:
+    def __init__(self, p=(0., 0.75)):
+        self.p_min = p[0]
+        self.p_max = p[1]
+
+    # def __call__(self, tensor):  # pixel毎にランダム消去
+    #     nChannels, nSeq = tensor.size()
+    #     nErasing = int(nChannels * nSeq * self.p)
+    #     indices = np.random.choice(nChannels * nSeq, nErasing, replace=False)
+    #     channel_indices = indices // nSeq
+    #     seq_indices = indices % nSeq
+    #     tensor_copy = tensor.clone()
+    #     tensor_copy[channel_indices, seq_indices] = 0.
+    #     return tensor_copy
+    
+    # def __call__(self, tensor):  # 時間連続するランダムpixel消去
+    #     n_channels, n_seq = tensor.shape
+    #     n_erasing = int(n_seq * self.p)
+    #     tensor_copy = tensor.clone()
+    #     for c in range(n_channels):
+    #         start_idx = np.random.randint(0, n_seq - n_erasing + 1)
+    #         tensor_copy[c, start_idx:start_idx + n_erasing] = 0
+    #     return tensor_copy
+
+    def __call__(self, tensor):
+        p = np.random.uniform(self.p_min, self.p_max)
+        n_channels, n_seq = tensor.shape
+        n_erasing = int(n_channels * p)
+        indices = np.random.choice(n_channels, n_erasing, replace=False)
+        tensor_copy = tensor.clone()
+        tensor_copy[indices] = 0.
+        return tensor_copy
+    
